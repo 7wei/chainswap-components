@@ -27,6 +27,7 @@ import { ConfirmedTransactionList, PendingTransactionList, NotificationList } fr
 import PlainSelect from '../Select/PlainSelect'
 import { HideOnMobile, ShowOnMobile } from 'theme'
 import Modal from 'components/Modal/Modal'
+import useBreakpoint from 'hooks/useBreakpoint'
 
 enum Mode {
   VISITOR,
@@ -179,8 +180,9 @@ const LinksWrapper = styled('div')({
   marginLeft: 60.2,
 })
 
-const WalletInfo = ({ amount, currency, address }: { amount: number; currency: string; address: string }) => {
+function WalletInfo({ amount, currency, address }: { amount: number; currency: string; address: string }) {
   const { showModal } = useModal()
+  const matches = useBreakpoint()
   const showAccountModal = () => {
     showModal(
       <AccountModal
@@ -192,28 +194,25 @@ const WalletInfo = ({ amount, currency, address }: { amount: number; currency: s
   }
 
   return (
-    <Box
-      width={'250px'}
-      height={'32px'}
-      display={'flex'}
-      border={'1px solid #FFFFFF'}
-      borderRadius={'4px'}
-      alignItems={'center'}
-    >
-      <Box padding={'0 10px 0 12px'}>
+    <Box height={'32px'} display={'flex'} border={'1px solid #FFFFFF'} borderRadius={'4px'} alignItems={'center'}>
+      <Box padding={matches ? '0 8px' : '0 10px 0 12px'} minWidth={100}>
         <Text fontSize={13} fontWeight={400}>{`${amount} ${currency}`}</Text>
       </Box>
       <Divider orientation={'vertical'} />
-      <Box padding={'0 10.26px 0 8px'} display={'flex'} alignItems={'center'}>
-        <Image src={StatusIcon} alt={'status icon'} style={{ width: '12px', height: '12px' }} />
-        <Box margin={'0 6px'}>
+      <Box
+        padding={'0 10.26px 0 8px'}
+        display={'flex'}
+        alignItems={'center'}
+        justifyContent="space-between"
+        width={matches ? 138 : 150}
+      >
+        <Box display="flex" alignItems="center">
+          <Image src={StatusIcon} alt={'status icon'} style={{ width: '12px', height: '12px', marginRight: 10 }} />
           <TextButton onClick={showAccountModal} fontSize={12} opacity={0.6}>
-            {shortenAddress(address)}
+            {shortenAddress(address, 8)}
           </TextButton>
         </Box>
-        <HideOnMobile>
-          <Copy toCopy={address} />
-        </HideOnMobile>
+        <Copy toCopy={address} />
       </Box>
     </Box>
   )
@@ -331,11 +330,20 @@ function Accordion({ children, placeholder }: { children: React.ReactNode; place
 
 function MobileHeader() {
   const classes = useMobileStyle()
-  const { showModal, hideModal, isOpen } = useModal()
+  const [isOpen, setIsOpen] = useState(false)
+  // const { showModal, hideModal, isOpen } = useModal()
+
+  const handleClick = useCallback(() => {
+    setIsOpen(true)
+  }, [])
+
+  const handleDismiss = useCallback(() => {
+    setIsOpen(false)
+  }, [])
 
   const MobileMenu = useCallback(
-    () => (
-      <Modal isCardOnMobile>
+    ({ isOpen, onDismiss }: { isOpen: boolean; onDismiss: () => void }) => (
+      <Modal isCardOnMobile customOnDismiss={onDismiss} customIsOpen={isOpen}>
         <Box display="grid" gridGap="15px">
           {NavLinks.map((nav) => (
             <NavLink
@@ -343,14 +351,14 @@ function MobileHeader() {
               id={`${nav.link}-nav-link`}
               to={nav.link}
               className={classes.navLink}
-              onClick={hideModal}
+              onClick={onDismiss}
             >
               {nav.name}
             </NavLink>
           ))}
           <Accordion placeholder="About">
             {AboutNavItems.map((item) => (
-              <MenuItem key={item.name} onClick={hideModal}>
+              <MenuItem key={item.name} onClick={onDismiss}>
                 {item.name}
               </MenuItem>
             ))}
@@ -358,22 +366,26 @@ function MobileHeader() {
         </Box>
       </Modal>
     ),
-    [classes.navLink, hideModal]
+    [classes.navLink]
   )
-  const handleClick = useCallback(() => {
-    showModal(<MobileMenu />)
-  }, [MobileMenu, showModal])
 
   return (
-    <ShowOnMobile>
-      <AppBar className={classes.root}>
-        <Box display="flex" alignItems="center">
-          <NavLink id={'chainswap'} to={routes.swap} className={classes.mainLogo}>
-            <Image src={ChainSwap} alt={'chainswap'} />
-          </NavLink>
-        </Box>
-        <TextButton onClick={isOpen ? hideModal : handleClick}>{isOpen ? <X /> : <Menu />}</TextButton>
-      </AppBar>
-    </ShowOnMobile>
+    <>
+      <MobileMenu isOpen={isOpen} onDismiss={handleDismiss} />
+      <ShowOnMobile>
+        <AppBar className={classes.root}>
+          <Box display="flex" alignItems="center">
+            <NavLink id={'chainswap'} to={routes.swap} className={classes.mainLogo}>
+              <Image src={ChainSwap} alt={'chainswap'} />
+            </NavLink>
+          </Box>
+          {isOpen ? (
+            <TextButton onClick={handleDismiss}>{<X />}</TextButton>
+          ) : (
+            <TextButton onClick={handleClick}>{<Menu />}</TextButton>
+          )}
+        </AppBar>
+      </ShowOnMobile>
+    </>
   )
 }

@@ -66,7 +66,7 @@ export default function WithdrawLiquidity({
   return (
     <AppBody title="Withdraw" onReturnClick={onReturnClick}>
       <Box padding={`0 ${matches ? 20 : 40}px 40px`} display="grid" gridGap="24px">
-        <OutlinedCard classname={classes.card} color={matches ? 'transparent' : ''}>
+        <OutlinedCard classname={classes.card} color={matches ? 'transparent' : undefined}>
           <Box padding={matches ? 0 : '16px 20px'} display="grid" gridGap={20}>
             <Box display="grid" gridGap={matches ? 18 : 5}>
               <TYPE.mediumGray fontWeight={500}>Amount</TYPE.mediumGray>

@@ -17,11 +17,18 @@ interface Props {
   width?: string
   onReturnClick?: () => void
   isCardOnMobile?: boolean
+  customIsOpen?: boolean
+  customOnDismiss?: () => void
 }
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    root: {},
+    root: {
+      [theme.breakpoints.down('sm')]: {
+        height: `calc(100% - ${theme.height.mobileHeader})`,
+        marginTop: 'auto',
+      },
+    },
     mobileRoot: {
       '& .MuiDialog-scrollPaper': {
         [theme.breakpoints.down('sm')]: {
@@ -46,7 +53,8 @@ const useStyles = makeStyles((theme: Theme) =>
         border: 'none',
         borderTop: '1px solid ' + theme.bgColor.bg4,
         width: '100%!important',
-        height: `calc(100% - ${theme.height.mobileHeader})`,
+        height: '100%',
+        maxHeight: 'unset',
         margin: 0,
         paddingBottom: '30px',
         borderRadius: 0,
@@ -54,6 +62,10 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     backdrop: {
       backgroundColor: 'rgba(0,0,0,.8)',
+      [theme.breakpoints.down('sm')]: {
+        height: `calc(100% - ${theme.height.mobileHeader})`,
+        marginTop: theme.height.mobileHeader,
+      },
     },
     mobileBackdrop: {
       [theme.breakpoints.down('sm')]: {
@@ -73,17 +85,18 @@ const useStyles = makeStyles((theme: Theme) =>
 )
 
 export default function Modal(props: Props) {
-  const { children, title, closeIcon, isCardOnMobile, returnIcon, onReturnClick } = props
+  const { children, title, closeIcon, isCardOnMobile, returnIcon, onReturnClick, customIsOpen, customOnDismiss } = props
   const classes = useStyles(props)
   const { matches } = useBreakpoint()
   const { isOpen, hideModal } = useModal()
   const node = useRef<any>()
-  useOnClickOutside(node, hideModal)
+  const hide = customOnDismiss ?? hideModal
+  useOnClickOutside(node, matches ? undefined : hide)
 
   return (
     <>
       <Dialog
-        open={isOpen}
+        open={customIsOpen !== undefined ? customIsOpen : isOpen}
         className={`${classes.root}${isCardOnMobile ? ' ' + classes.mobileRoot : ''}`}
         PaperProps={{ className: `${classes.paper}${isCardOnMobile ? ' ' + classes.mobilePaper : ''}`, ref: node }}
         BackdropProps={{ className: `${classes.backdrop}${isCardOnMobile ? ' ' + classes.mobileBackdrop : ''}` }}
@@ -91,7 +104,7 @@ export default function Modal(props: Props) {
         {(returnIcon || closeIcon || title || onReturnClick) && (
           <Box display="flex" justifyContent="space-between" alignItems="center" padding="20px 30px">
             {(returnIcon && !matches) || onReturnClick ? (
-              <IconButton onClick={onReturnClick ?? hideModal}>
+              <IconButton onClick={onReturnClick ?? hide}>
                 <ArrowLeft />
               </IconButton>
             ) : (
@@ -99,7 +112,7 @@ export default function Modal(props: Props) {
             )}
             {title && <TYPE.mediumHeader textAlign="center">{title}</TYPE.mediumHeader>}
             {closeIcon || (returnIcon && matches) ? (
-              <IconButton className={classes.closeIconContainer} onClick={hideModal}>
+              <IconButton className={classes.closeIconContainer} onClick={hide}>
                 <CloseIcon className={classes.closeIcon} />
               </IconButton>
             ) : (
